@@ -1,0 +1,131 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Aug 10 13:09:29 2022
+
+@author: ALarger
+"""
+
+
+
+
+"""
+Camelot
+
+Some helpful parameters:
+    filepath (Required, string) path+name or url of file being extracted
+    pages (Optional, string) List of page numbers as a string (example: pages='1-3,8,12'). Can also use "all". Default is just the first page
+    flavor (Optional, string) "lattice" (cells in table separated by visible lines) or "stream" (no visible lines separating the columns and rows). Default is lattice
+    
+    you can find more advanced settings in the documentation
+
+
+Resources: 
+    https://camelot-py.readthedocs.io/en/master/
+"""
+
+import camelot
+
+#Lattice example
+
+chemNames = []
+tables = camelot.read_pdf(r'C:/Users/alarger/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/CP Extraction Demo/lattice example.pdf',pages='12-15', flavor='lattice')
+i=0 
+for table in tables:
+    df = tables[i].df
+    for index, row in df.iterrows():
+        if row[0] == 'Chemical' or row[1] == 'ND' or row[1] == '0' or row[1] == '':
+            pass #Only save chemical names that were detected
+        else: 
+            chemNames.append(row[0].replace('\n',' ').replace('  ',' ').strip())
+    i+=1
+        
+
+#Stream example
+
+herbicides = []
+insecticides = []
+fungicides = []
+other = []
+tables = camelot.read_pdf(r'C:/Users/alarger/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/CP Extraction Demo/stream example.pdf',pages='61-64', flavor='stream')
+i=0 
+for table in tables:
+    df = tables[i].df
+    # print(df)
+    herbicides.extend(df.loc[3:,0]) #The first three rows in these tables were headers
+    insecticides.extend(df.loc[3:,1])
+    fungicides.extend(df.loc[3:,2])
+    other.extend(df.loc[3:,3])
+    i+=1
+    
+herbicides = list(filter(None, herbicides)) #Remove empty strings
+insecticides = list(filter(None, insecticides))
+fungicides = list(filter(None, fungicides))
+other = list(filter(None, other))
+
+herbicides = herbicides[:-1] #Get rid of last name in list (it just said "Source: Economic Research Service with USDA and proprietary data.")
+
+
+
+
+
+"""
+tabula
+
+Some helpful parameters:
+    filepath (Required, string) Name of file being extracted
+    pages (Optional, string) List of page numbers as a string (example: pages='1-3,8,12'). Can also use "all". Default is just the first page
+    lattice (Optional, bool) True for lattice (cells in table separated by visible lines) 
+    stream (Optional, bool) True for stream (no visible lines separating the columns and rows)
+    multiple_tables (Optional, bool) True if there are multiple separate tables, False if not. Default is True
+    
+    you can find more advanced settings in the documentation
+    
+Resources:
+    https://tabula-py.readthedocs.io/en/latest/
+"""
+
+import tabula
+
+#Lattice example
+tables=tabula.read_pdf(r'C:/Users/alarger/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/CP Extraction Demo/lattice example.pdf',pages='12-15', lattice=True, multiple_tables=False)
+
+#Stream example
+tables = tabula.read_pdf(r'C:/Users/alarger/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/CP Extraction Demo/stream example.pdf',pages='61-64', stream=True, multiple_tables=False)
+
+
+
+
+
+"""
+Converting .pdf to .txt and parsing
+
+download Xpdf command line tools here: https://www.xpdfreader.com/download.html
+documentation for pdftotext: https://www.xpdfreader.com/pdftotext-man.html
+
+You can also use pytesseract to get text from scanned pdfs using OCR
+"""
+
+import os, re
+os.chdir(r'C:/Users/alarger/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/CP Extraction Demo')
+
+#Lattice example
+execpath = 'C:\\Users\\alarger\\xpdf-tools-win-4.03\\bin64\\pdftotext.exe' 
+file ='lattice example.pdf'
+cmd = " ".join([execpath,"-nopgbrk","-table",'"'+file+'"'])
+os.system(cmd) #Convert pdf to txt
+    
+ifile = open(file.replace('.pdf','.txt'))
+text = ifile.read()
+table = text.split('Table 3 Maximum concentrations of analytes that were detected in this study.')[-1].split('Discussion')[0] #Get text in table 3
+table = table.split('\n') #split table into a list of rows
+chemNames = []
+for row in table:
+    row = row.strip() #get rid of extra spaces on ends
+    row = re.split(r'\s{2,}', row) #Split text with two or more whitespaces into a list
+    if len(row) == 2 and all(x in '1234567890., ' for x in row[-1]) and row[-1] != '0': 
+        chemNames.append(row[0]) #Add chem names with nonzero numbers next to them
+
+
+
+#Stream example
+
