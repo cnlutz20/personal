@@ -1,0 +1,72 @@
+const width = 125;
+const h = 5;
+const w = new ListWidget();
+
+
+const startDate = new Date('2024-12-20');
+const now = new Date();
+const days = daysSince(startDate);
+let fm = FileManager.iCloud();
+let path = fm.joinPath(fm.documentsDirectory(), 'IMG_2671.jpg');
+let img = fm.readImage( path );
+w.backgroundImage = img;
+
+console.log(startDate)
+console.log(`Days since ${startDate.toLocaleDateString()}: ${days}`);
+
+getwidget("Days on E");
+getwidget(`${days}`);
+
+
+Script.setWidget(w);
+Script.complete();
+w.presentMedium();
+
+function daysSince(date) {
+  const now = new Date();
+  const timeDifference = now.getTime() - date.getTime();
+  const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+  console.log(now)
+  return daysDifference;
+}
+
+function getwidget(str) {
+  //const titlew = w.addText(str);
+  //titlew.textColor = new Color("#cb31d2");
+  w.addSpacer(6)
+  const widimg = w.addImage(getTitle(str))
+  widimg.imageSize=new Size(width, h)
+  w.addSpacer(6)
+  }
+
+function getTitle(str) {
+
+    const context =new DrawContext()
+    
+    let font1 = new Font("GillSans-UltraBold",30)
+    context.size=new Size(width, h)
+    context.setFont(font1)
+    context.opaque=false
+    context.respectScreenScale=true
+    
+    const rect = new Rect(20,20,500,90)
+    context.setFillColor(new Color("#F15BB5"))
+    context.fill(rect)
+    
+    
+    context.setLineWidth(3)
+    context.setStrokeColor(new Color("#ffffff"))
+    context.strokeRect(rect)
+    
+    
+    context.drawTextInRect(str, rect)
+    //const path = new Path()
+    return context.getImage()
+  
+  
+//   titlew.font = new Font("GillSans-UltraBold",30)
+  //titlew.font = font1
+  
+//   Font.boldSystemFont(30);
+  w.addSpacer(6);
+  }
